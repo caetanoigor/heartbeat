@@ -1,66 +1,45 @@
-# 🫀 Heartbeat
+# Heartbeat
 
-API REST desenvolvida em FastAPI para monitoramento, diagnóstico e telemetria de recursos do sistema Linux (CPU, memória RAM e armazenamento em disco), empacotada de forma leve e segura através de containers Podman.
-
----
-
-## 📌 Visão Geral
-
-O **Heartbeat** foi concebido com uma arquitetura modular que separa a camada de coleta direta de hardware da camada de transporte HTTP. Permite a integração simples com ferramentas externas de observabilidade, painéis de controle ou rotinas automatizadas de *health check*.
-
-### Principais Características
-- **Arquitetura Desacoplada**: Separação estrita entre o coletor de telemetria (`app/collector.py`) e a interface web (`app/main.py`).
-- **Coleta Precisa**: Medição de CPU com amostragem delta, diferenciação de núcleos lógicos/físicos e conversão precisa em base binária para MB e GB.
-- **Containerização Segura**: Configuração focada no Podman (compatível com Docker), sem privilégios de root (*rootless*) e sem daemon central.
-- **Suíte de Testes Integrada**: Validação automatizada das rotas com `pytest` e simulação HTTP em memória com o `TestClient`.
+Uma API REST simples em FastAPI para coletar e expor métricas básicas de hardware do sistema Linux (CPU, memória RAM e disco). O projeto já vem pronto para rodar isolado em container com Podman ou diretamente no sistema via virtualenv.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## O que o projeto faz
 
-- **Linguagem**: Python 3.12+
-- **Framework Web**: FastAPI
-- **Servidor ASGI**: Uvicorn
-- **Extração de Métricas**: psutil
-- **Testes Automatizados**: pytest & httpx
-- **Containerização**: Podman
-
----
-
-## 📂 Estrutura do Projeto
-
-heartbeat/
-    app/
-        __init__.py
-        collector.py
-        main.py
-    tests/
-        __init__.py
-        test_api.py
-    .gitignore
-    Containerfile
-    README.md
-    requirements.txt
+- **Uso de CPU**: monitora a porcentagem média de uso com janela de amostragem curta e identifica a quantidade de núcleos físicos e lógicos.
+- **Memória RAM**: calcula a memória total, a quantidade disponível e a porcentagem em uso.
+- **Armazenamento**: mede espaço total, livre e ocupado na partição raiz (`/`).
+- **Endpoints documentados**: interface Swagger/OpenAPI nativa do FastAPI.
+- **Testes unitários**: suíte de validação de rotas com `pytest` e `httpx`.
 
 ---
 
-## 📋 Endpoints da API
+## Tecnologias
 
-| Método | Endpoint | Descrição | Código HTTP |
-| :--- | :--- | :--- | :--- |
-| GET | `/` | Health check básico de disponibilidade | 200 OK |
-| GET | `/metrics` | Retorna o consumo em tempo real de CPU, RAM e disco em JSON | 200 OK |
-| GET | `/docs` | Documentação interativa Swagger UI | 200 OK |
-| GET | `/redoc` | Documentação técnica alternativa ReDoc | 200 OK |
+- Python 3.12+
+- FastAPI & Uvicorn
+- psutil
+- pytest
+- Podman (ou Docker)
 
 ---
 
-## 📊 Exemplo de Resposta (GET /metrics)
+## Endpoints
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| GET | `/` | Retorna o status operacional da API |
+| GET | `/metrics` | Retorna as métricas de CPU, RAM e disco em JSON |
+| GET | `/docs` | Documentação interativa Swagger UI |
+
+---
+
+## Exemplo de retorno (`GET /metrics`)
 
 ```json
 {
   "cpu": {
-    "usage_percent": 12.4,
+    "usage_percent": 14.2,
     "logical_cores": 16,
     "physical_cores": 8
   },
@@ -77,36 +56,43 @@ heartbeat/
 }
 ```
 
-## 🚀 Como Executar
-Opção 1: Execução com Container (Podman)
+---
 
-Construir a imagem local:
+## Como rodar
+
+### 1. Usando Podman (recomendado)
+
+Construa a imagem:
 podman build -t heartbeat:latest .
 
-Iniciar o container em segundo plano:
+
+Inicie o container:
 podman run -d --name heartbeat-app -p 8000:8000 heartbeat:latest
 
-Acessar as rotas no navegador:
 
-Métricas: http://localhost:8000/metrics
+Acesse no navegador ou via curl:
+- `http://localhost:8000/metrics`
+- `http://localhost:8000/docs`
 
-Documentação Swagger: http://localhost:8000/docs
+Para parar e remover o container:
+podman stop heartbeat-app && podman rm heartbeat-app
 
-Parar e remover o container:
-podman stop heartbeat-app
-podman rm heartbeat-app
+---
 
-Opção 2: Execução Direta no Sistema (Local)
+### 2. Rodando localmente
 
-Criar e ativar o ambiente virtual:
-python -m venv venv
+Crie e ative o ambiente virtual:
+
+python3 -m venv venv
 source venv/bin/activate
 
-Instalar as dependências:
+
+Instale as dependências:
 pip install -r requirements.txt
 
-Executar os testes automatizados:
+
+Rode os testes:
 pytest -v
 
-Iniciar o servidor de desenvolvimento:
+Inicie a aplicação:
 uvicorn app.main:app --reload --port 8000
